@@ -61,6 +61,7 @@ def login():
 
 
 @bp.route("/profile/", methods=("GET", "POST"), strict_slashes=False)
+@login_required
 def profile():
     return render_template("auth/profile.jinja2")
 

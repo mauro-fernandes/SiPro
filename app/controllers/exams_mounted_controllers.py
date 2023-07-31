@@ -1,12 +1,17 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from wtforms import StringField, SubmitField, SelectField, IntegerField, BooleanField, RadioField, TextAreaField, HiddenField, SelectMultipleField, fields, FileField, datetime, DateTimeField, DateField, TimeField 
 from flask_wtf import FlaskForm
 from wtforms.validators import InputRequired
 from datetime import datetime
 
 from ..models import Exam, Question, User, Exam_mounted
+from flask_login import login_required, current_user, login_url, logout_user, login_manager, UserMixin, AnonymousUserMixin, set_login_view
+from functools import wraps
 
 bp_name = "exams_mounted"
+
+print(f"Loading {__file__}...")
+print(f"bp_name = {bp_name}")
 
 
 bp = Blueprint(bp_name, __name__)
@@ -17,6 +22,26 @@ properties = {
     "collection_name": "exams_mounted",
     "list_fields": ["id","title", "exam_id", "question_id", "question_worth", "Is it open?", "start_date", "end_date"]
 }
+
+################     test admin access control    #####################
+EXEMPT_METHODS = {"OPTIONS"}
+def admin_required(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        
+        if request.method in EXEMPT_METHODS or current_app.config.get("LOGIN_DISABLED"):
+            pass
+        elif current_user.is_student:
+            current_app.login_manager.LOGIN_MESSAGE = "only admin may access this page."
+            return current_app.login_manager.unauthorized()
+            #return current_app.login_manager.LOGIN_MESSAGE
+
+        if callable(getattr(current_app, "ensure_sync", None)):
+            return current_app.ensure_sync(func)(*args, **kwargs)
+        return func(*args, **kwargs)
+
+    return decorated_view
+############################################################################
 
 
 class _to:
@@ -36,15 +61,21 @@ class _j:
     new = f"{bp_name}/new.jinja2"
     create = f"{bp_name}/create.jinja2"
     search_tmdb = f"{bp_name}/search_tmdb.jinja2"
+    
+    
+
+
 
 
 @bp.route("/", methods=["GET"])
+@login_required
 def index():
     """
     Index page.
     :return: The response.
-    """
+    """    
     exams_mounted = Exam_mounted.query.all()
+    print( "current_user = ", current_user)
     return render_template(_j.index, entities=exams_mounted, **properties)
 
 
@@ -80,13 +111,14 @@ class SearchForm(FlaskForm):
     title = StringField("title", validators=[InputRequired()])
     submit = SubmitField("Submit")
 
-@bp.route("/new", methods=["GET"])
+
+@bp.route("/new", methods=["GET"])                 # decorator test to check if user is logged in to create new exam_mounted 
+@admin_required
 def new():
     """
     Page to create new Entity
     :return: render create template
     """
-    
     form = EditForm()
     form.exam_id.choices = [(exam.id, exam.title) for exam in Exam.query.all()]
     
@@ -97,6 +129,7 @@ def new():
 
 
 @bp.route("/", methods=["POST"])
+@admin_required
 def create():
     """
     Create new entity
@@ -120,11 +153,13 @@ def show(id):
     Show page.
     :return: The response.
     """
+    print( "current_user = ", current_user)
     exam_mounted = db.get_or_404(Exam_mounted, id)
     return render_template(_j.show, entity=exam_mounted, **properties)
 
 
 @bp.route("/<int:id>/edit", methods=["GET"])
+@admin_required
 def edit(id):
     """
     Edit page.
@@ -142,6 +177,7 @@ def edit(id):
 
 @bp.route("/<int:id>/edit", methods=["POST", "UPDATE"])
 @bp.route("/<int:id>", methods=["UPDATE"])
+@admin_required
 def update(id):
     """
     Save Edited Entity
@@ -159,6 +195,7 @@ def update(id):
 
 
 @bp.route("/<int:id>/delete", methods=["POST", "DELETE"])
+@admin_required
 def destroy(id):
     """
     Delete Entity

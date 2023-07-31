@@ -166,3 +166,17 @@ cython_debug/
 app/data.sqlite
 data.sqlite
 app/JSONtests.py
+app/__pycache__/__init__.cpython-310.pyc
+app/__pycache__/cli_cmds.cpython-310.pyc
+app/__pycache__/seed.cpython-310.pyc
+app/__pycache__/webapp.cpython-310.pyc
+app/auth/__pycache__/__init__.cpython-310.pyc
+app/auth/__pycache__/controller.cpython-310.pyc
+app/auth/__pycache__/forms.cpython-310.pyc
+app/auth/__pycache__/loaders.cpython-310.pyc
+app/controllers/__pycache__/__init__.cpython-310.pyc
+app/controllers/__pycache__/exams_controllers.cpython-310.pyc
+app/controllers/__pycache__/exams_mounted_controllers.cpython-310.pyc
+app/controllers/__pycache__/main.cpython-310.pyc
+app/controllers/__pycache__/questions_controllers.cpython-310.pyc
+app/controllers/__pycache__/users_controllers.cpython-310.pyc
